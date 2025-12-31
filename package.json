@@ -1,0 +1,19 @@
+{
+  "name": "newyear-tz-countdown",
+  "version": "1.0.0",
+  "description": "New Year countdown using IANA timezones like America/New_York",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "keywords": [
+    "timezone",
+    "newyear",
+    "countdown",
+    "date",
+    "time",
+    "iana"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "MIT"
+}
