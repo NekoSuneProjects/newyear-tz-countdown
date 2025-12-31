@@ -1,8 +1,33 @@
+function getTimeZoneOffsetMinutes(timeZone, date) {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+
+  const parts = Object.fromEntries(
+    dtf.formatToParts(date).map(p => [p.type, p.value])
+  );
+
+  const asUTC = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second)
+  );
+
+  return (asUTC - date.getTime()) / 60000;
+}
+
 /**
- * Automatically calculates New Year countdown for any IANA timezone
- * Works every year without updates
- *
- * @param {string} timeZone - e.g. "America/New_York"
+ * Accurate New Year countdown for any IANA timezone
  */
 function getNewYearCountdown(timeZone) {
   if (!timeZone) {
@@ -11,44 +36,24 @@ function getNewYearCountdown(timeZone) {
 
   const now = new Date();
 
-  // Get current year in target timezone
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    year: "numeric"
-  }).formatToParts(now);
-
+  // Current year in target timezone
   const currentYear = Number(
-    parts.find(p => p.type === "year").value
+    new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric"
+    }).format(now)
   );
 
   const targetYear = currentYear + 1;
 
-  // Create Jan 1st midnight IN TARGET TIMEZONE (correctly)
-  const newYearParts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
-  }).formatToParts(
-    new Date(`${targetYear}-01-01T00:00:00Z`)
-  );
+  // Jan 1 midnight UTC
+  const jan1UTC = new Date(Date.UTC(targetYear, 0, 1, 0, 0, 0));
 
-  const map = Object.fromEntries(
-    newYearParts.map(p => [p.type, p.value])
-  );
+  // Offset of timezone at that moment
+  const offsetMinutes = getTimeZoneOffsetMinutes(timeZone, jan1UTC);
 
-  const newYearUTC = Date.UTC(
-    Number(map.year),
-    Number(map.month) - 1,
-    Number(map.day),
-    Number(map.hour),
-    Number(map.minute),
-    Number(map.second)
-  );
+  // True New Year moment in UTC
+  const newYearUTC = jan1UTC.getTime() - offsetMinutes * 60_000;
 
   const diffMs = newYearUTC - now.getTime();
 
