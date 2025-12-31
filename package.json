@@ -1,5 +1,5 @@
 {
-  "name": "newyear-tz-countdown",
+  "name": "@nekosuneprojects/newyear-tz-countdown",
   "version": "1.0.1",
   "description": "New Year countdown using IANA timezones like America/New_York",
   "main": "src/index.js",
