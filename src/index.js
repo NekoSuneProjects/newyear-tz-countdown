@@ -6,33 +6,51 @@
  */
 function getNewYearCountdown(timeZone) {
   if (!timeZone) {
-    throw new Error("Timezone is required (e.g. America/New_York)");
+    throw new Error("Timezone is required (e.g. Europe/London)");
   }
 
   const now = new Date();
 
-  // Get current year in the given timezone
-  const yearFormatter = new Intl.DateTimeFormat("en-US", {
+  // Get current year in target timezone
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric"
-  });
+  }).formatToParts(now);
 
-  const currentYearInTZ = Number(yearFormatter.format(now));
-
-  // Always target NEXT year automatically
-  const targetYear = currentYearInTZ + 1;
-
-  // Create New Year date in target timezone
-  const newYearInTZ = new Date(
-    `${targetYear}-01-01T00:00:00`
+  const currentYear = Number(
+    parts.find(p => p.type === "year").value
   );
 
-  // Convert New Year time from target timezone to UTC Date
-  const newYearUTC = new Date(
-    newYearInTZ.toLocaleString("en-US", { timeZone })
+  const targetYear = currentYear + 1;
+
+  // Create Jan 1st midnight IN TARGET TIMEZONE (correctly)
+  const newYearParts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(
+    new Date(`${targetYear}-01-01T00:00:00Z`)
   );
 
-  const diffMs = newYearUTC - now;
+  const map = Object.fromEntries(
+    newYearParts.map(p => [p.type, p.value])
+  );
+
+  const newYearUTC = Date.UTC(
+    Number(map.year),
+    Number(map.month) - 1,
+    Number(map.day),
+    Number(map.hour),
+    Number(map.minute),
+    Number(map.second)
+  );
+
+  const diffMs = newYearUTC - now.getTime();
 
   if (diffMs <= 0) {
     return {
